@@ -10,6 +10,43 @@
 #include <string>
 using namespace cv;
 
+// harris corners
+void corners(Mat &input, Mat &output){
+
+	Mat grayScale;
+	int thresh = 150; //max 255
+	int blockSize = 2;
+    int apertureSize = 3;
+    double k = 0.04;
+
+    // create a new matrix
+	Mat dst = Mat::zeros( input.size(), CV_32FC1 );
+
+    cvtColor( input, grayScale, CV_BGR2GRAY );
+   
+    cornerHarris(grayScale, dst, blockSize, apertureSize, k );
+    
+    
+    Mat dst_norm, dst_norm_scaled;
+    normalize( dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat() );
+    convertScaleAbs( dst_norm, dst_norm_scaled );
+
+    
+    for( int i = 0; i < dst_norm.rows ; i++ )
+    {
+        for( int j = 0; j < dst_norm.cols; j++ )
+        {
+            if( (int) dst_norm.at<float>(i,j) > thresh )
+            {
+                circle( dst_norm_scaled, Point(j,i), 5,  Scalar(0), 2, 8, 0 );
+            }
+        }
+    }
+
+	output = dst_norm_scaled;
+	cvtColor(output,output,COLOR_GRAY2BGR);
+}
+
 // Threshold
 void threshold(Mat &input,Mat &output){
 	// Convert the image to Gray
@@ -86,24 +123,26 @@ int main( int argc, char** argv )
 
 
 
-	for(int i = 0; i < 200; i++){
+	for(int i = 0; i < 1000; i++){
 		// get frame from video
 		video >> frame;
 
-		keyPress = (char)waitKey(30);
+		keyPress = (char)waitKey(40);
 		//t = Threshold
 		if(keyPress == 't'){
 			threshold(frame,outFrame);
 		}else if(keyPress == 'e'){
 			canny(frame,outFrame);
-		}else{
+		}else if(keyPress == 'c'){
+			corners(frame,outFrame);
+		}
+		else{
 			outFrame = frame;
 		}
-
 		
-		VOut << outFrame;
 		imshow("Roberts", outFrame);
-		waitKey(1);
+		waitKey(5);
+		//VOut << outFrame;
 
 	}
 
