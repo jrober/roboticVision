@@ -10,6 +10,88 @@
 #include <string>
 using namespace cv;
 
+// lines
+void drawLines(Mat &input, Mat &output){
+
+	Mat dst, cdst;
+    Canny(input, dst, 50, 200, 3); 
+    cvtColor(dst, cdst, CV_GRAY2BGR); 
+ 
+    std::vector<Vec2f> lines;
+    // detect lines
+    HoughLines(dst, lines, 1, CV_PI/180, 150, 0, 0 );
+ 
+    // draw lines
+    for( size_t i = 0; i < lines.size(); i++ )
+    {
+        float rho = lines[i][0], theta = lines[i][1];
+        Point pt1, pt2;
+        double a = cos(theta), b = sin(theta);
+        double x0 = a*rho, y0 = b*rho;
+        pt1.x = cvRound(x0 + 1000*(-b));
+        pt1.y = cvRound(y0 + 1000*(a));
+        pt2.x = cvRound(x0 - 1000*(-b));
+        pt2.y = cvRound(y0 - 1000*(a));
+        line( cdst, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
+    }
+
+    output = cdst;
+    //cvtColor(output,output,COLOR_GRAY2BGR);
+}
+
+// corner detection with subpixels
+void corners2(Mat &input, Mat &output){
+
+  
+
+  /// Parameters for Shi-Tomasi algorithm
+  std::vector<Point2f> corners;
+  double qualityLevel = 0.01;
+  double minDistance = 10;
+  int maxCorners = 25;
+  int blockSize = 3;
+  bool useHarrisDetector = false;
+  double k = 0.04;
+  Mat grayScale;
+  RNG rng(12345);
+
+  
+
+  /// Copy the source image
+  Mat copy;
+  copy = input.clone();
+
+  cvtColor( input, grayScale, CV_BGR2GRAY );
+
+  /// Apply corner detection
+  goodFeaturesToTrack( grayScale,
+                       corners,
+                       maxCorners,
+                       qualityLevel,
+                       minDistance,
+                       Mat(),
+                       blockSize,
+                       useHarrisDetector,
+                       k );
+
+
+  /// Draw corners detected
+  //std::cout<<"** Number of corners detected: "<<corners.size()<<std::endl;
+  int r = 6; //radius
+  
+  //cv2.circle(img, center, radius, color, thickness=1, lineType=8, shift=0)
+  for( int i = 0; i < corners.size(); i++ ){
+      	circle( copy, corners[i], 
+		r, 
+		Scalar(255, 
+		255,255), 
+		-1, 8, 0 ); 
+  }
+
+  output = copy;
+  //cvtColor(output,output,COLOR_GRAY2BGR);
+}
+
 // harris corners
 void corners(Mat &input, Mat &output){
 
@@ -102,16 +184,13 @@ int main( int argc, char** argv )
 	VideoCapture video(0); // get a camera object
 	Mat frame; // allocate an image buffer object
 	Mat outFrame;
-	Mat grayScale;
-	namedWindow("Roberts", CV_WINDOW_AUTOSIZE); // initialize a display window
-
-	//imshow("Roberts", frame); // display the grabbed frame
-	//keyPress = (char)waitKey(0);
+	
+ 	// initialize a display window
+	namedWindow("Roberts", CV_WINDOW_AUTOSIZE);
 
 	// Default resolution of the frame is obtained.The default resolution is system dependent.
 	int frame_width = video.get(CV_CAP_PROP_FRAME_WIDTH);
 	int frame_height = video.get(CV_CAP_PROP_FRAME_HEIGHT);
-
 
 	// Create a video write object.
 	VideoWriter VOut;
@@ -127,16 +206,19 @@ int main( int argc, char** argv )
 		// get frame from video
 		video >> frame;
 
-		keyPress = (char)waitKey(40);
-		//t = Threshold
+		// wait for image processing key
+		keyPress = (char)waitKey(50);
+		
+		//different image processing options 
 		if(keyPress == 't'){
 			threshold(frame,outFrame);
 		}else if(keyPress == 'e'){
 			canny(frame,outFrame);
 		}else if(keyPress == 'c'){
-			corners(frame,outFrame);
-		}
-		else{
+			corners2(frame,outFrame);
+		}else if(keyPress == 'l'){
+			drawLines(frame,outFrame);
+		}else{
 			outFrame = frame;
 		}
 		
@@ -145,8 +227,6 @@ int main( int argc, char** argv )
 		//VOut << outFrame;
 
 	}
-
-
 
 	// When everything done, release the video capture and write object
 	video.release();
