@@ -10,14 +10,20 @@
 #include <string>
 using namespace cv;
 
+
+
+
 // lines
 void drawLines(Mat &input, Mat &output){
 
 	Mat dst, cdst;
     Canny(input, dst, 50, 200, 3); 
+
+    // void cvtColor(InputArray src, OutputArray dst, int code, int dstCn=0 )
     cvtColor(dst, cdst, CV_GRAY2BGR); 
  
     std::vector<Vec2f> lines;
+
     // detect lines
     HoughLines(dst, lines, 1, CV_PI/180, 150, 0, 0 );
  
@@ -48,7 +54,7 @@ void corners2(Mat &input, Mat &output){
   std::vector<Point2f> corners;
   double qualityLevel = 0.01;
   double minDistance = 10;
-  int maxCorners = 25;
+  int maxCorners = 50;
   int blockSize = 3;
   bool useHarrisDetector = false;
   double k = 0.04;
@@ -130,7 +136,7 @@ void corners(Mat &input, Mat &output){
 }
 
 // Threshold
-void threshold(Mat &input,Mat &output){
+void thresholder(Mat &input,Mat &output){
 	// Convert the image to Gray
 	Mat grayScale;
 	cvtColor( input, grayScale, CV_BGR2GRAY );
@@ -144,6 +150,17 @@ void threshold(Mat &input,Mat &output){
 	*/
 	threshold(grayScale, output, 100, 255,0);
 	cvtColor(output,output,COLOR_GRAY2BGR);
+}
+
+void difference(Mat prevInput,Mat currentInput, Mat &output){
+	Mat grayScale1, grayScale2;
+
+	//cvtColor( currentInput, grayScale1, CV_BGR2GRAY );
+	//cvtColor( prevInput, grayScale2, CV_BGR2GRAY );
+
+	absdiff(prevInput, currentInput, output);
+	thresholder(output, output);
+	//erode(output, output, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3,3)));
 }
 
 // Canny Edges
@@ -184,6 +201,7 @@ int main( int argc, char** argv )
 	VideoCapture video(0); // get a camera object
 	Mat frame; // allocate an image buffer object
 	Mat outFrame;
+	Mat prevFrame;
 	
  	// initialize a display window
 	namedWindow("Roberts", CV_WINDOW_AUTOSIZE);
@@ -200,31 +218,42 @@ int main( int argc, char** argv )
 	VOut.open("VideoOut.avi", CV_FOURCC('M', 'P', 'E', 'G') , 30, Size(frame_width, frame_height), 1);
 	//VOut.open("VideoOut.avi", -1 , 30, Size(frame_width, frame_height), 1); // use this if you don’t have the correct codec
 
+	//initialize frames
+	video >> prevFrame;
+	video >> frame;
 
 
-	for(int i = 0; i < 1000; i++){
-		// get frame from video
-		video >> frame;
+
+	for(int i = 0; i < 200; i++){
+		
 
 		// wait for image processing key
 		keyPress = (char)waitKey(50);
 		
 		//different image processing options 
 		if(keyPress == 't'){
-			threshold(frame,outFrame);
+			thresholder(frame,outFrame);
 		}else if(keyPress == 'e'){
 			canny(frame,outFrame);
 		}else if(keyPress == 'c'){
 			corners2(frame,outFrame);
 		}else if(keyPress == 'l'){
 			drawLines(frame,outFrame);
+		}else if(keyPress == 'd'){
+			difference(prevFrame,frame,outFrame);
 		}else{
 			outFrame = frame;
 		}
 		
+		
+
 		imshow("Roberts", outFrame);
-		waitKey(5);
-		//VOut << outFrame;
+		waitKey();
+		VOut << outFrame;
+
+		// get another frame from video
+		frame.copyTo(prevFrame);
+		video >> frame;
 
 	}
 
