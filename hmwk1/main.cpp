@@ -171,7 +171,7 @@ void canny(Mat &input, Mat &output){
 
 	int ratio = 3;
 	int kernel_size = 3;
-	int lowThreshold = 50;
+	int lowThreshold = 75;
 
 	// Create a matrix of the same type and size as src (for dst)
  	dst.create( input.size(), input.type() );
@@ -198,6 +198,7 @@ void canny(Mat &input, Mat &output){
 int main( int argc, char** argv )
 {
 	char keyPress;
+	char TempKey_press;
 	VideoCapture video(0); // get a camera object
 	Mat frame; // allocate an image buffer object
 	Mat outFrame;
@@ -221,15 +222,21 @@ int main( int argc, char** argv )
 	//initialize frames
 	video >> prevFrame;
 	video >> frame;
+	outFrame = frame;
 
 
 
-	for(int i = 0; i < 200; i++){
+	for(int i = 0; i < 1250; i++){
 		
 
 		// wait for image processing key
-		keyPress = (char)waitKey(50);
-		
+		TempKey_press = (char)waitKey(1);
+
+		// if there was a change, change the keyPress option
+		if(TempKey_press == 't' || TempKey_press == 'e' || TempKey_press == 'c' || TempKey_press == 'l' || TempKey_press == 'd' || TempKey_press == 'n'){
+			keyPress = TempKey_press;
+		}
+
 		//different image processing options 
 		if(keyPress == 't'){
 			thresholder(frame,outFrame);
@@ -241,14 +248,15 @@ int main( int argc, char** argv )
 			drawLines(frame,outFrame);
 		}else if(keyPress == 'd'){
 			difference(prevFrame,frame,outFrame);
-		}else{
+		}else if(keyPress == 'n'){
 			outFrame = frame;
 		}
 		
 		
+		
 
 		imshow("Roberts", outFrame);
-		waitKey();
+		//waitKey(5);
 		VOut << outFrame;
 
 		// get another frame from video
