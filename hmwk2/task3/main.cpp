@@ -160,29 +160,115 @@ int main( int argc, char** argv )
 	else if(keyPress == '3'){
 		Mat intrinsic = Mat::zeros(3,3,CV_32F);
 		Mat distortion = Mat::zeros(1,5,CV_32F);
+		Mat newcameramtx;
+		Mat diffImage;
+		Mat close = imread("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/Close.jpg");
+		Mat far = imread("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/Far.jpg");
+		Mat turned = imread("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/Turned.jpg");
 		
 		//open file stream
 		std::ifstream myfile;
-  		myfile.open("matricies.txt");
+  		myfile.open("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/matricies.txt");
 
+  		//load intrinsic parameters
   		float temp;
   		for(int i = 0; i < 3; i++)
   			for(int j = 0; j < 3; j++){
   				myfile >> temp;
+  				//std::cout << temp << std::endl;
   				intrinsic.at<float>(i,j) = temp; 
+  				//push_back(temp); 
   			}
 
-
+  		//load distortion parameters
+  		for(int i = 0; i < 5; i++){
+  			myfile >> temp;
+  			//std::cout << temp << std::endl;
+  			distortion.at<float>(i) = temp;
+  		}
 		//fill up the 
 
-		//undistort(img, mtx, dist, None, newcameramtx)
 
-		std::cout << intrinsic << std::endl;
-		std::cout << distortion << std::endl;
+		undistort(close, newcameramtx, intrinsic, distortion);
+
+		absdiff(newcameramtx,close,diffImage);
+
+		imwrite( "closeDiff.jpg", diffImage);
+
+		undistort(far, newcameramtx, intrinsic, distortion);
+
+		absdiff(newcameramtx,close,diffImage);
+
+		imwrite( "farDiff.jpg", diffImage);
+
+		undistort(turned, newcameramtx, intrinsic, distortion);
+
+		absdiff(newcameramtx,close,diffImage);
+
+		imwrite( "turnedDiff.jpg", diffImage);
+
+		imshow("Roberts",diffImage);
+
+		// std::cout << intrinsic << std::endl;
+		// std::cout << distortion << std::endl;
 
 	}
 	//task 4
 	else if(keyPress == '4'){
+
+		Mat intrinsic = Mat::zeros(3,3,CV_32F);
+		Mat distortion = Mat::zeros(1,5,CV_32F);
+		std::vector<Point2f> imagePoints;
+		std::vector<Point3f> objectPoints;
+
+		//open file stream
+		std::ifstream myfile;
+  		myfile.open("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/matricies.txt");
+
+  		//load intrinsic parameters
+  		float temp;
+  		for(int i = 0; i < 3; i++)
+  			for(int j = 0; j < 3; j++){
+  				myfile >> temp;
+  				//std::cout << temp << std::endl;
+  				intrinsic.at<float>(i,j) = temp; 
+  				//push_back(temp); 
+  			}
+
+  		//load distortion parameters
+  		for(int i = 0; i < 5; i++){
+  			myfile >> temp;
+  			//std::cout << temp << std::endl;
+  			distortion.at<float>(i) = temp;
+  		}
+
+
+  		myfile.close();
+  		myfile.open("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/DataPoints.txt");
+  		
+  		//load imagepoints parameters
+  		float x,y,z;
+  		for(int i = 0; i < 20; i++){
+  			myfile >> x >> y;
+  			// std::cout << x << "       " << y << std::endl;
+  			imagePoints.push_back(Point2f(x, y));
+  		}
+
+  		//load objectpoints
+  		for(int i = 0; i < 20; i++){
+  			myfile >> x >> y >> z;
+  			// std::cout << x << "       " << y << "       " << z << std::endl;
+  			objectPoints.push_back(Point3f(x, y, z));
+  		}
+
+		
+		Mat rvec;
+		Mat tvec;
+		solvePnP (objectPoints, imagePoints, intrinsic, distortion, rvec, tvec, false, SOLVEPNP_ITERATIVE);
+
+		Rodrigues(rvec, rvec, noArray());
+		std::cout << rvec << std::endl;
+		std::cout << tvec << std::endl;
 
 
 	}
