@@ -276,10 +276,183 @@ int main( int argc, char** argv )
 	else if(keyPress == '5'){
 
 
+		char keyPress = 'g';
+		char TempKey_press;
+		VideoCapture video(0); // get a camera object
+		Mat frame;
+		Mat image;
+		video >> frame;
+		int counter = 17;
+		std::stringstream ss;
+		Size patternsize(9,7); //interior number of corners column X row
+		std::ofstream outFile;
+
+		//USE THIS TO SAVE IMAGES
+		bool saveImages = false;
+		if(saveImages){
+			while(keyPress != 'q'){
+				video >> image;
+				imshow("Roberts", image);
+				keyPress = waitKey(1);
+				if(keyPress == 's'){
+					ss << "Justins" << counter << ".jpg";
+					imwrite( ss.str(), image);
+					ss.str("");
+					counter++;
+					imshow("Roberts", image);
+					keyPress = 'g';
+					waitKey(0);
+				}
+			}
+		}
+
+
+		std::vector<std::vector<Point2f>> imagePoints;
+		std::vector<std::vector<Point3f>> objectPoints;
+
+		std::vector<Point3f> temp;
+		for(int i = 0; i < 7; i++){
+			
+			for(int j = 0; j < 9; j++){
+				temp.push_back(Point3f(j,i,0));
+			}
+		}
+
+		for(int i = 1; i <= 40; i++){
+			objectPoints.push_back(temp);
+		}
+
+
+		bool firstTime = true;
+		Size imageSize;
+
+		//Loop through each image
+		for(int i = 1; i <= 40; i++){
+			
+			if(firstTime){
+				ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/build/Justins" << i << ".jpg";
+				firstTime = false;
+				imageSize = frame.size();
+				//std::cout << imageSize << std::flush;
+			}
+			else{
+				ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/build/Justins" << i << ".jpg";
+			}
+
+			frame = imread(ss.str());
+			ss.str("");
+
+			cvtColor( frame, grayScale, CV_BGR2GRAY );
+			
+			std::vector<Point2f> corners; //this will be filled by the detected corners
+
+			//CALIB_CB_FAST_CHECK saves a lot of time on images
+			//that do not contain any chessboard corners
+			bool patternfound = findChessboardCorners(grayScale, patternsize, corners,
+			        CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE
+			        + CALIB_CB_FAST_CHECK);
+
+			if(patternfound)
+			  cornerSubPix(grayScale, corners, Size(11, 11), Size(-1, -1),
+			    TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+			imagePoints.push_back(corners);
+
+			drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
+			imshow("Roberts", frame);
+			//waitKey(0);
+		}
+
+		//Returns
+		Mat cameraMatrix;
+		Mat distCoeffs;
+		std::vector<Mat> rvecs;
+		std::vector<Mat> tvecs;
+
+		outFrame = frame;
+		imshow("Roberts", outFrame);
+		//waitKey(0);
+
+		/*
+		double test = calibrateCamera( const std::vector<std::vector<Point3f>> &objectPoints,...
+		 const std::vector<std::vector<Point2f> > &imagePoints, Size imageSize, ...
+		 Mat& cameraMatrix, Mat& distCoeffs, std::vector<Mat>& rvecs, std::vector<Mat>& tvecs, int flags=0 );
+		*/
+		
+		double test = calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs,0 );
+
+		/*
+		std::cout << "camera matrix\n" << std::flush;
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3; j++){
+				std::cout << cameraMatrix[i][j] << " \n" << std::flush; 
+			}
+			std::cout << end << std::flush;
+		}*/
+
+		std::cout << "camera matrix" << std::endl << cameraMatrix << std::endl << std::flush; 
+		std::cout << "distortion matrix" << std::endl << distCoeffs << std::endl << std::flush; 
+
+		//output to a file
+		outFile.open("cameraCoefficients.txt");
+
+
+		//outFile << "Camera Matrix\n";
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3; j++){
+				outFile << cameraMatrix.at<double>(i,j) << " ";
+			}
+			outFile << std::endl;
+		}
+
+		//outFile << "\n\nDistortion Matrix\n";
+		for(int i = 0; i < 5; i++){
+			outFile << distCoeffs.at<double>(i) << " ";
+		}
+
+		video.release();
+
 	}
 	//task6
 	else if(keyPress == '6'){
 
+		Mat intrinsic = Mat::zeros(3,3,CV_64F);
+		Mat distortion = Mat::zeros(1,5,CV_64F);
+		Mat newcameramtx;
+		Mat diffImage;
+		Mat justinImage = imread("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/build/Justins5.jpg");
+		
+		//open file stream
+		std::ifstream myfile;
+  		myfile.open("/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk2/task3/build/cameraCoefficients.txt");
+
+  		//load intrinsic parameters
+  		double temp;
+  		for(int i = 0; i < 3; i++)
+  			for(int j = 0; j < 3; j++){
+  				myfile >> temp;
+  				//std::cout << temp << std::endl;
+  				intrinsic.at<double>(i,j) = temp; 
+  				//push_back(temp); 
+  			}
+
+  		//load distortion parameters
+  		for(int i = 0; i < 5; i++){
+  			myfile >> temp;
+  			//std::cout << temp << std::endl;
+  			distortion.at<double>(i) = temp;
+  		}
+		//fill up the 
+
+
+		undistort(justinImage, newcameramtx, intrinsic, distortion);
+
+		absdiff(newcameramtx,justinImage,diffImage);
+
+		imwrite( "justinDiff.jpg", diffImage);
+
+		std::cout << intrinsic << std::endl;
+		std::cout << distortion << std::endl;
 
 	}
 		
