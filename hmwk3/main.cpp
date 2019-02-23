@@ -20,6 +20,9 @@ int main( int argc, char** argv )
 	bool firstTime = true;
 	Size imageSize;
 
+	// initialize a display window
+	namedWindow("Roberts", CV_WINDOW_AUTOSIZE);
+
 	std::vector<Point3f> temp;
 	for(double i = 0; i < 7; i++){
 		
@@ -181,8 +184,8 @@ int main( int argc, char** argv )
 		drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
-		imshow("Roberts", outFrame);
-		waitKey(0);
+		//imshow("Roberts", outFrame);
+		//waitKey(0);
 	}
 
 	firstTime = true;
@@ -218,8 +221,8 @@ int main( int argc, char** argv )
 		drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
-		imshow("Roberts", outFrame);
-		waitKey(0);
+		//imshow("Roberts", outFrame);
+		//waitKey(0);
 	}
 
 	Mat R;
@@ -237,6 +240,86 @@ int main( int argc, char** argv )
 	std::cout << "Esential  " << std::endl << E << std::endl << std::flush; 
 	std::cout << "Fundamental " << std::endl << F << std::endl << std::flush; 
 
+
+	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoL1.bmp";
+	Mat leftStereo = imread(ss.str());
+	ss.str("");
+
+	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoR1.bmp";
+	Mat rightStereo = imread(ss.str());
+	ss.str("");
+
+	Mat undistLeft;
+	Mat undistRight;
+
+	// undistort images
+	undistort(leftStereo, undistLeft, cameraMatrixL, distCoeffsL);
+	
+	undistort(rightStereo, undistRight, cameraMatrixR, distCoeffsR);
+
+	imageSize = undistLeft.size();
+
+	std::vector<Point2f> corners; //this will be filled by the detected corners
+	std::vector<Point2f> cornersLeft; //this will be used as the selected left points
+	std::vector<Point2f> cornersRight; // this will be used as the selected right points
+
+
+	//////////Choose three left corners//////////////
+	cvtColor( undistLeft, grayScale, CV_BGR2GRAY );
+
+	//CALIB_CB_FAST_CHECK saves a lot of time on images
+	//that do not contain any chessboard corners
+	bool patternfound = findChessboardCorners(grayScale, patternsize, corners,
+	    CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE
+	    + CALIB_CB_FAST_CHECK);
+
+	if(patternfound)
+		cornerSubPix(grayScale, corners, Size(11, 11), Size(-1, -1),
+			TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+	// choose three corners on left image
+	cornersLeft.push_back(corners[0]);
+	cornersLeft.push_back(corners[11]);
+	cornersLeft.push_back(corners[22]);
+
+	for(int i = 0; i < cornersLeft.size(); i++){
+		//circle(Mat& img, Point center, int radius, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
+		circle(undistLeft, cornersLeft[i], 6, Scalar(255,0,0), 2, 8, 0);
+	}
+
+
+
+	// imshow("Roberts", undistLeft);
+	// waitKey(0);
+
+	//////////Choose three right corners//////////////
+	cvtColor( undistRight, grayScale, CV_BGR2GRAY );
+
+	//CALIB_CB_FAST_CHECK saves a lot of time on images
+	//that do not contain any chessboard corners
+	patternfound = findChessboardCorners(grayScale, patternsize, corners,
+	    CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE
+	    + CALIB_CB_FAST_CHECK);
+
+	if(patternfound)
+		cornerSubPix(grayScale, corners, Size(11, 11), Size(-1, -1),
+			TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+	// choose three corners on left image
+	cornersRight.push_back(corners[33]);
+	cornersRight.push_back(corners[44]);
+	cornersRight.push_back(corners[55]);
+
+	for(int i = 0; i < cornersRight.size(); i++){
+		//circle(Mat& img, Point center, int radius, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
+		circle(undistRight, cornersRight[i], 6, Scalar(255,0,0), 2, 8, 0);
+	}
+
+	// imshow("Roberts", undistRight);
+	// waitKey(0);
+
+	//computeCorrespondEpilines(InputArray points, int whichImage, InputArray F, OutputArray lines)
+	
 
 	return 0;
 }
