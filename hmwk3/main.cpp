@@ -22,6 +22,7 @@ int main( int argc, char** argv )
 
 	// initialize a display window
 	namedWindow("Roberts", CV_WINDOW_AUTOSIZE);
+	namedWindow("Second", CV_WINDOW_AUTOSIZE);
 
 	std::vector<Point3f> temp;
 	for(double i = 0; i < 7; i++){
@@ -319,7 +320,96 @@ int main( int argc, char** argv )
 	// waitKey(0);
 
 	//computeCorrespondEpilines(InputArray points, int whichImage, InputArray F, OutputArray lines)
-	
+	Mat rightLines;
+	computeCorrespondEpilines(cornersRight,2,F,rightLines);
+	std::cout << "right lines" << rightLines << "\n"; 
 
+	Mat leftLines;
+	computeCorrespondEpilines(cornersLeft,1,F,leftLines);
+	std::cout << "left lines" << leftLines << "\n"; 
+
+	int numCols = undistRight.cols;
+
+
+	// right lines go on left image
+	for(int i = 0; i < rightLines.rows; i++){
+		float a = rightLines.at<float>(i,0);
+		float b = rightLines.at<float>(i,1);
+		float c = rightLines.at<float>(i,2);
+		// std::cout << "a: " << a;
+		// std::cout << "b: " << b;
+		// std::cout << "c: " << c;
+		// std::cout << "\n";
+		Point2i pt1(0,(int)(-c/b));
+		Point2i pt2(numCols,(-a*numCols-c)/b);
+		line(undistLeft,pt1,pt2,Scalar(0,0,255),2,1,0);
+
+	}
+
+
+	// left lines go on the right image
+	for(int i = 0; i < leftLines.rows; i++){
+		float a = leftLines.at<float>(i,0);
+		float b = leftLines.at<float>(i,1);
+		float c = leftLines.at<float>(i,2);
+		// std::cout << "a: " << a;
+		// std::cout << "b: " << b;
+		// std::cout << "c: " << c;
+		// std::cout << "\n";
+		Point2i pt1(0,(int)(-c/b));
+		Point2i pt2(numCols,(-a*numCols-c)/b);
+		line(undistRight,pt1,pt2,Scalar(0,0,255),2,1,0);
+	}
+
+	std::cout << "\n\n";
+
+	imshow("Roberts", undistLeft);
+	//waitKey(0);
+
+	imshow("Second", undistRight);
+	//waitKey(0);
+
+
+	//// Rectify ////
+	//stereoRectify(InputArray cameraMatrix1, InputArray distCoeffs1, InputArray cameraMatrix2, 
+	//InputArray distCoeffs2, Size imageSize, InputArray R,
+	// InputArray T, OutputArray R1, OutputArray R2, OutputArray P1, 
+	//OutputArray P2, OutputArray Q, int flags=CALIB_ZERO_DISPARITY, double alpha=-1,
+	// Size newImageSize=Size(), Rect* validPixROI1=0, Rect* validPixROI2=0 )
+
+	//Output Matricies
+	Mat R1;
+	Mat R2;
+	Mat P1;
+	Mat P2;
+	Mat Q;
+	// Size newImageSize = size();
+	stereoRectify(cameraMatrixL, distCoeffsL, cameraMatrixR, distCoeffsR, imageSize, R, T, 
+		R1, R2, P1, P2, Q, CALIB_ZERO_DISPARITY);
+
+	//initUndistortRectifyMap(InputArray cameraMatrix, InputArray distCoeffs, InputArray R, 
+	//InputArray newCameraMatrix, Size size, int m1type, OutputArray map1, OutputArray map2)
+
+	//Left image rectify
+	Size size = undistLeft.size();
+	Mat map1L;
+	Mat map2L;
+	initUndistortRectifyMap(cameraMatrixL, distCoeffsL, R1, P1, size, CV_32FC1, map1L, map2L);
+
+	size = undistRight.size();
+	Mat map1R;
+	Mat map2R;
+	initUndistortRectifyMap(cameraMatrixR, distCoeffsR, R2, P2, size, CV_32FC1, map1R, map2R);
+
+	// line	(	InputOutputArray 	img,
+	// Point 	pt1,
+	// Point 	pt2,
+	// const Scalar & 	color,
+	// int 	thickness = 1,
+	// int 	lineType = LINE_8,
+	// int 	shift = 0 
+	// )	
+
+	waitKey(0);
 	return 0;
 }
