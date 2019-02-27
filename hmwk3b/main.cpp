@@ -11,7 +11,7 @@ int main( int argc, char** argv )
 	std::vector<std::vector<Point2f>> imagePointsL;
 	std::vector<std::vector<Point2f>> imagePointsR;
 	std::vector<std::vector<Point3f>> objectPoints;
-	float multiplier = 2;
+	float multiplier = 3.88;
 	Mat frame;
 	Mat grayScale;
 	Size patternsize(10,7);
@@ -19,6 +19,7 @@ int main( int argc, char** argv )
 	std::stringstream ss;
 	bool firstTime = true;
 	Size imageSize;
+	int skip = 3;
 
 	// initialize a display window
 	namedWindow("Roberts", CV_WINDOW_AUTOSIZE);
@@ -32,16 +33,20 @@ int main( int argc, char** argv )
 		}
 	}
 
-	for(int i = 0; i <= 31; i++){
+
+	for(int i = 1; i <= 99; i++){
+		if(i % skip != 0)
+			continue;
 		objectPoints.push_back(temp);
 	}
 
 
 
 	//Loop through each left image
-	for(int i = 0; i <= 31; i++){
-
-		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/CameraL" << i << ".bmp";
+	for(int i = 1; i <= 99; i++){
+		if(i % skip != 0)
+			continue;
+		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/left/leftL" << i << ".bmp";
 		frame = imread(ss.str());
 		ss.str("");
 
@@ -71,14 +76,15 @@ int main( int argc, char** argv )
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
 		imshow("Roberts", outFrame);
-		//waitKey(0);
+		// waitKey(0);
 	}
 
 	firstTime = true;
 	//Loop through each right image
-	for(int i = 0; i <= 31; i++){
-
-		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/CameraR" << i << ".bmp";
+	for(int i = 1; i <= 99; i++){
+		if(i % skip != 0)
+			continue;
+		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/right/rightR" << i << ".bmp";
 		frame = imread(ss.str());
 		ss.str("");
 
@@ -108,7 +114,7 @@ int main( int argc, char** argv )
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
 		imshow("Roberts", outFrame);
-		//waitKey(0);
+		// waitKey(0);
 	}
 
 
@@ -154,9 +160,10 @@ int main( int argc, char** argv )
 	std::vector<std::vector<Point2f>> stereoPointsL;
 	std::vector<std::vector<Point2f>> stereoPointsR;
 
-	for(int i = 0; i <= 31; i++){
-
-		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoL" << i << ".bmp";
+	for(int i = 1; i <= 99; i++){
+		if(i % skip != 0)
+			continue;
+		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/stereo/stereoL" << i << ".bmp";
 		frame = imread(ss.str());
 		ss.str("");
 
@@ -185,15 +192,16 @@ int main( int argc, char** argv )
 		drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
-		//imshow("Roberts", outFrame);
-		//waitKey(0);
+		imshow("Roberts", outFrame);
+		waitKey(0);
 	}
 
 	firstTime = true;
 	//Loop through each stereo right image
-	for(int i = 0; i <= 31; i++){
-
-		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoR" << i << ".bmp";
+	for(int i = 1; i <= 99; i++){
+		if(i % skip != 0)
+			continue;
+		ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/stereo/stereoR" << i << ".bmp";
 		frame = imread(ss.str());
 		ss.str("");
 
@@ -222,8 +230,8 @@ int main( int argc, char** argv )
 		drawChessboardCorners(frame, patternsize, Mat(corners), patternfound);
 		//cvtColor( frame, outFrame, CV_GRAY2BGR );
 		outFrame = frame;
-		//imshow("Roberts", outFrame);
-		//waitKey(0);
+		imshow("Roberts", outFrame);
+		waitKey(0);
 	}
 
 	Mat R;
@@ -242,11 +250,11 @@ int main( int argc, char** argv )
 	std::cout << "Fundamental " << std::endl << F << std::endl << std::flush;
 
 
-	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoL1.bmp";
+	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/stereo/stereoL1.bmp";
 	Mat leftStereo = imread(ss.str());
 	ss.str("");
 
-	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3/images/StereoR1.bmp";
+	ss << "/home/justin/Documents/school/roboticVision/JustinsRepo/hmwk3b/images/stereo/stereoR1.bmp";
 	Mat rightStereo = imread(ss.str());
 	ss.str("");
 
@@ -424,7 +432,7 @@ int main( int argc, char** argv )
 	imwrite( "diffRight.jpg", diffImage);
 	waitKey(0);
 
-	
+
 	// draw left lines
 	numCols = newLeft.cols;
 	for(int i = 0; i < newLeft.rows/10; i++){
@@ -447,6 +455,33 @@ int main( int argc, char** argv )
 
 	imshow("Second", newRight);
 	imwrite( "rectifiedRight.jpg", newRight);
+	waitKey(0);
+
+
+
+	// draw right lines on original image
+	numCols = leftStereo.cols;
+	for(int i = 0; i < leftStereo.rows/10; i++){
+		Point2i pt1(0,10*i);
+		Point2i pt2(numCols,10*i);
+		line(leftStereo,pt1,pt2,Scalar(0,0,255),1,1,0);
+	}
+
+	// draw left lines  on original image
+	numCols = rightStereo.cols;
+	for(int i = 0; i < rightStereo.rows/10; i++){
+		Point2i pt1(0,10*i);
+		Point2i pt2(numCols,10*i);
+		line(rightStereo,pt1,pt2,Scalar(0,0,255),1,1,0);
+	}
+
+
+	imshow("Second", leftStereo);
+	imwrite( "originalRight.jpg", leftStereo);
+	waitKey(0);
+
+	imshow("Roberts", rightStereo);
+	imwrite( "originalLeft.jpg", rightStereo);
 	waitKey(0);
 
 
