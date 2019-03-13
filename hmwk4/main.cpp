@@ -1,9 +1,12 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking.hpp>
+#include <opencv2/plot.hpp>
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <fstream>
+
 
 using namespace cv;
 
@@ -70,6 +73,22 @@ int main( int argc, char** argv )
 	std::vector<Point3f> transformedL2;
   std::vector<Point3f> transformedR2;
 
+	std::vector<double> leftZ;
+  std::vector<double> leftY;
+	std::vector<double> leftX;
+
+	std::vector<double> rightZ;
+  std::vector<double> rightY;
+	std::vector<double> rightX;
+
+	using namespace std;
+
+
+  ofstream myfile;
+  myfile.open ("output.txt");
+
+
+
 
   // chessboard corners
   std::vector<Point2f> cornersLeft;
@@ -89,6 +108,7 @@ int main( int argc, char** argv )
 	namedWindow("Right", CV_WINDOW_AUTOSIZE);
 	namedWindow("CroppedLeft", CV_WINDOW_AUTOSIZE);
 	namedWindow("CroppedRight", CV_WINDOW_AUTOSIZE);
+	namedWindow("plot", CV_WINDOW_AUTOSIZE);
 
 
   Mat cameraLeft, cameraRight, distortionLeft, distortionRight;
@@ -466,23 +486,68 @@ int main( int argc, char** argv )
 
 		  perspectiveTransform(pixelLMat, positionLXYZ, Q);
 			transformedL2.push_back(positionLXYZ[0]);
+			leftZ.push_back(-(double)positionLXYZ[0].z);
+			leftY.push_back((double)positionLXYZ[0].y);
+			leftX.push_back((double)positionLXYZ[0].x);
 
 			perspectiveTransform(pixelRMat, positionRXYZ, Q);
 			transformedR2.push_back(positionRXYZ[0]);
+			rightZ.push_back(-(double)positionRXYZ[0].z);
+			rightY.push_back((double)positionRXYZ[0].y);
+			rightX.push_back((double)positionRXYZ[0].x);
 
 			std::cout << Mat(positionLXYZ[0]) << " left camera location \n";
 			std::cout << Mat(positionRXYZ[0]) << " right camera location \n";
 		}
 
-    waitKey(0);
-
-		prevRight = rightShot;
-		prevLeft = leftShot;
-
+    // waitKey(0);
+		//
+		// prevRight = rightShot;
+		// prevLeft = leftShot;
 
   }
 
+
+	std::cout << Mat(rightZ) << " right Z matrix\n";
+	std::cout << Mat(rightY) << " right Y matrix\n";
+	Mat plot_result;
+	Ptr<plot::Plot2d> plot = plot::Plot2d::create(Mat(rightZ),Mat(rightY));
+  plot->setPlotBackgroundColor( Scalar( 50, 50, 50 ) );
+  plot->setPlotLineColor( Scalar( 50, 50, 255 ) );
+  plot->render( plot_result );
+	imshow( "plot", plot_result );
+	imwrite("rightZY.jpg", plot_result);
 	waitKey(0);
+
+	plot = plot::Plot2d::create(Mat(rightZ),Mat(rightX));
+  plot->setPlotBackgroundColor( Scalar( 50, 50, 50 ) );
+  plot->setPlotLineColor( Scalar( 50, 50, 255 ) );
+  plot->render( plot_result );
+  imshow( "plot", plot_result );
+	imwrite("rightZX.jpg", plot_result);
+	waitKey(0);
+
+	plot = plot::Plot2d::create(Mat(leftZ),Mat(leftY));
+  plot->setPlotBackgroundColor( Scalar( 50, 50, 50 ) );
+  plot->setPlotLineColor( Scalar( 50, 50, 255 ) );
+  plot->render( plot_result );
+  imshow( "plot", plot_result );
+	imwrite("leftZY.jpg", plot_result);
+	waitKey(0);
+
+	plot = plot::Plot2d::create(Mat(leftZ),Mat(leftX));
+  plot->setPlotBackgroundColor( Scalar( 50, 50, 50 ) );
+  plot->setPlotLineColor( Scalar( 50, 50, 255 ) );
+  plot->render( plot_result );
+  imshow( "plot", plot_result );
+	imwrite("leftZX.jpg", plot_result);
+	waitKey(0);
+
+	myfile << "Right Positions\n" << transformedR2 << "\nLeft Positions\n" << transformedL2;
+
+	myfile.close();
+
+
 	return 0;
 }
 
