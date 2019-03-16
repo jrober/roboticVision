@@ -5,10 +5,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <fstream>
-
 
 using namespace cv;
+
 
 // get rectangle center
 Point rectCenter(Rect2d r){
@@ -84,9 +83,11 @@ int main( int argc, char** argv )
 	using namespace std;
 
 
-  ofstream myfile;
-  myfile.open ("output.txt");
+  ofstream myfileR;
+  myfileR.open ("rightPositions.txt");
 
+	ofstream myfileL;
+  myfileL.open ("leftPositions.txt");
 
 
 
@@ -498,6 +499,8 @@ int main( int argc, char** argv )
 
 			std::cout << Mat(positionLXYZ[0]) << " left camera location \n";
 			std::cout << Mat(positionRXYZ[0]) << " right camera location \n";
+
+			waitKey(0);
 		}
 
     // waitKey(0);
@@ -543,10 +546,12 @@ int main( int argc, char** argv )
 	imwrite("leftZX.jpg", plot_result);
 	waitKey(0);
 
-	myfile << "Right Positions\n" << transformedR2 << "\nLeft Positions\n" << transformedL2;
+	myfileR << transformedR2;
+	myfileL << transformedL2;
 
-	myfile.close();
 
+	myfileR.close();
+	myfileL.close();
 
 	return 0;
 }
